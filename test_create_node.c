@@ -60,23 +60,43 @@ Polynomial getPolynomialFromFile(char *filePath) {
         printf("open file error!!\n");
         exit(0);
     }
-    int coefficient;
-    int power;
-
     Polynomial polynomial = polynomialCreate();
-    Node *preNode;
-    int first = 1;
-    while (fscanf(fp, "%dx^%d", &coefficient, &power) != EOF) {
-        Node *node = createNodePtr(coefficient, power);
-        if (first) {
-            polynomial.first = node;
-            first = 0;
-        } else {
-            preNode->next = node;
+    while (1) {
+        int coefficient;
+        int power;
+        int readNum = fscanf(fp, "%dx^%d", &coefficient, &power);
+        if (readNum == EOF || readNum == 0) {
+            break;
         }
-        preNode = node;
+        printf("TEST: readNum: %d\n", readNum);
+        if (readNum == 1) {
+            printf("1 coefficient: %d\n", coefficient);
+            polynomial = addNewItem(polynomial, coefficient, 0);
+        } else {
+            polynomial = addNewItem(polynomial, coefficient, power);
+        }
     }
     return polynomial;
+
+}
+
+int hasNextNode(Node *node) {
+    if (node == NULL) {
+        return 0;
+    }
+    if (node->next == NULL) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+Node *updataToNextNode(Node *node) {
+    if (hasNextNode(node)) {
+        return node->next;
+    } else {
+        return NULL;
+    }
 }
 
 Polynomial addTwoPolynomial(Polynomial polynomial_1, Polynomial polynomial_2) {
@@ -91,38 +111,96 @@ Polynomial addTwoPolynomial(Polynomial polynomial_1, Polynomial polynomial_2) {
         return polynomial_2;
     }
 
-    int is_p1_not_to_NULL = 1;
-    int is_p2_not_to_NULL = 1;
+    int is_p1_to_NULL = 0;
+    int is_p2_to_NULL = 0;
 
-    while (is_p1_not_to_NULL || is_p2_not_to_NULL) {
-        int p1_coefficient = 0;
+    while (is_p1_to_NULL == 0 && is_p2_to_NULL == 0) {
         int p1_power = p1_current->x_power;
-
-        int p2_coefficient = 0;
         int p2_power = p2_current->x_power;
 
-        if (p1_power == p2_power) {
+        if (p1_power < p2_power) {
+            int p2_num = p2_current->num;
+            output_polynomial = addNewItem(output_polynomial, p2_num, p2_power);
+
+            if (hasNextNode(p2_current)) {
+                p2_current = updataToNextNode(p2_current);
+            } else {
+                is_p2_to_NULL = 1;
+            }
+
+        } else if (p1_power > p2_power) {
+            int p1_num = p1_current->num;
+            output_polynomial = addNewItem(output_polynomial, p1_num, p1_power);
+
+            if (hasNextNode(p1_current)) {
+                p1_current = updataToNextNode(p1_current);
+            } else {
+                is_p1_to_NULL = 1;
+            }
+
+        } else {
             int add_coefficient = p1_current->num + p2_current->num;
             output_polynomial =
                 addNewItem(output_polynomial, add_coefficient, p1_power);
 
-            p1_current = p1_current->next;
-            p2_current = p2_current->next;
-            if(p1_current == NULL) {
-                is_p1_not_to_NULL = 0;
+            if (hasNextNode(p1_current)) {
+                p1_current = updataToNextNode(p1_current);
+            } else {
+                is_p1_to_NULL = 1;
             }
-            
-            if(p2_current == NULL) {
-                is_p2_not_to_NULL = 0;
+            if (hasNextNode(p2_current)) {
+                p2_current = updataToNextNode(p2_current);
+            } else {
+                is_p2_to_NULL = 1;
             }
-
+        }
+    }
+    if (is_p1_to_NULL == 0 && is_p2_to_NULL == 1) {
+        while (hasNextNode(p1_current)) {
+            output_polynomial = addNewItem(output_polynomial, p1_current->num,
+                                           p1_current->x_power);
+            p1_current = updataToNextNode(p1_current);
         }
 
-
-
-
-
+    } else if (is_p1_to_NULL == 1 && is_p2_to_NULL == 0) {
+        while (hasNextNode(p2_current)) {
+            output_polynomial = addNewItem(output_polynomial, p2_current->num,
+                                           p2_current->x_power);
+            p2_current = updataToNextNode(p2_current);
+        }
     }
+    return output_polynomial;
+}
+
+void *writePolynomialToFile(char *filePath, Polynomial polynomial) {
+    FILE *fout = fopen(filePath, "w+t");
+
+    if (fout == NULL) {
+        printf("Fail To Open File out1.txt!!");
+        fclose(fout);
+        return;
+    }
+    Node *current = polynomial.first;
+    int first_write = 1;
+    while (current != NULL) {
+        int coefficient = current->num;
+        int power = current->x_power;
+        if (first_write) {
+            if (coefficient > 0 || coefficient < 0) {
+                fprintf(fout, "%dx^%d", coefficient, power);
+            }
+            first_write = 0;
+        } else {  // not first write
+            if (coefficient > 0) {
+                fprintf(fout, "+%dx^%d", coefficient, power);
+            } else if (coefficient < 0) {
+                fprintf(fout, "%dx^%d", coefficient, power);
+            }  // if (coefficient == 0) do nothing
+        }
+
+        current = updataToNextNode(current);
+    }
+    fclose(fout);
 }
 
 int main() {
@@ -132,8 +210,9 @@ int main() {
     show(polynomial_1);
     show(polynomial_2);
 
-    polynomial_1 = addNewItem(polynomial_1, 6, 7);
-    show(polynomial_1);
+    Polynomial ansPolynomial = addTwoPolynomial(polynomial_1, polynomial_2);
+    show(ansPolynomial);
+    writePolynomialToFile("test.txt", ansPolynomial);
 
     return 0;
 }
