@@ -156,14 +156,14 @@ Polynomial addTwoPolynomial(Polynomial polynomial_1, Polynomial polynomial_2) {
         }
     }
     if (is_p1_to_NULL == 0 && is_p2_to_NULL == 1) {
-        while (hasNextNode(p1_current)) {
+        while (p1_current) {
             output_polynomial = addNewItem(output_polynomial, p1_current->num,
                                            p1_current->x_power);
             p1_current = updataToNextNode(p1_current);
         }
 
     } else if (is_p1_to_NULL == 1 && is_p2_to_NULL == 0) {
-        while (hasNextNode(p2_current)) {
+        while (p2_current) {
             output_polynomial = addNewItem(output_polynomial, p2_current->num,
                                            p2_current->x_power);
             p2_current = updataToNextNode(p2_current);
