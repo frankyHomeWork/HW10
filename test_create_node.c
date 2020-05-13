@@ -54,13 +54,22 @@ Polynomial addNewItem(Polynomial polynomial, int num, int x_power) {
     return polynomial;
 }
 
+int isHasFile(char *filePath) {
+    FILE *fp;
+    if ((fp = fopen(filePath, "r")) == NULL) {
+        return 0;
+    }
+    return 1;
+}
+
+
 Polynomial getPolynomialFromFile(char *filePath) {
+    Polynomial polynomial = polynomialCreate();
     FILE *fp;
     if ((fp = fopen(filePath, "r")) == NULL) {
         printf("open file error!!\n");
-        exit(0);
+        return polynomial;
     }
-    Polynomial polynomial = polynomialCreate();
     while (1) {
         int coefficient;
         int power;
@@ -203,9 +212,29 @@ void *writePolynomialToFile(char *filePath, Polynomial polynomial) {
     fclose(fout);
 }
 
+
+
+
+
+
+
+
+
+
+
 int main() {
-    Polynomial polynomial_1 = getPolynomialFromFile("Poly1.txt");
-    Polynomial polynomial_2 = getPolynomialFromFile("Poly2.txt");
+    Polynomial polynomial_1;
+    Polynomial polynomial_2;
+
+
+    int isHasTwoPolynomialFile = (isHasFile("Poly1.txt") && isHasFile("Poly2.txt"));
+    if(isHasTwoPolynomialFile) {
+        polynomial_1 = getPolynomialFromFile("Poly1.txt");
+        polynomial_2 = getPolynomialFromFile("Poly2.txt");
+    } else { // Use human hand
+        // pass
+    }
+    
 
     show(polynomial_1);
     show(polynomial_2);
